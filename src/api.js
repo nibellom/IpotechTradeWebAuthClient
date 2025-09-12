@@ -7,13 +7,6 @@ console.log('[api] baseURL =', baseURL)
 
 const api = axios.create({ baseURL })
 
-// ВАЖНО: добавляем спец-заголовок для обхода ngrok interstitial
-api.interceptors.request.use((cfg) => {
-  cfg.headers = cfg.headers || {}
-  cfg.headers['ngrok-skip-browser-warning'] = 'true'
-  return cfg
-})
-
 export function setToken(token) {
   if (token) {
     api.defaults.headers.common.Authorization = `Bearer ${token}`
