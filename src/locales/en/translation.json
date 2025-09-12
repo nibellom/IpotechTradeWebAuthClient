@@ -1,0 +1,191 @@
+{
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "lang": "Language"
+  },
+  "login": {
+    "title": "Sign in via Telegram",
+    "subtitle": "To use the app you need to open it from our Telegram bot. This ensures your account is linked to your Telegram ID securely.",
+    "openInTelegram": "Open Bot in Telegram",
+    "hint": "After tapping the button in Telegram, use the WebApp button to open the app — you'll be signed in automatically."
+  },
+  "dashboard": {
+    "exchange": "Exchange",
+    "balance": "Bot trading balance",
+    "deposit": "Deposit",
+    "profit": "Profit (net of fees is shown in bot)",
+    "deals": "Closed deals: {{count}}"
+  },
+  "connect": {
+    "title": "Connect / Update API keys",
+    "note": "Enter your API keys and trading balance.",
+    "exchange": "Exchange",
+    "apiPub": "Public API key",
+    "apiSec": "Secret API key",
+    "balance": "Bot trading balance",
+    "balanceMinError": "Minimum balance is {{min}} USDT",
+    "save": "Save",
+    "saved": "Saved",
+    "success": "Account successfully connected",
+    "help": "API Keys Guide"
+  },
+  "deposit": {
+    "title": "Deposit management",
+    "current": "Your current deposit: {{v}} USDT",
+    "amount": "Amount (USDT)",
+    "add": "Add deposit",
+    "saved": "Added {{amount}} USDT. Please transfer the transaction amount via Bybit internal transfer to UID: 118410288, or via Binance Pay ID: 205039637. New deposit: {{new}} USDT",
+    "error": "Failed to update deposit"
+  },
+  "profit": {
+    "title": "Your profit",
+    "totalFunds": "Total funds"
+  },
+  "landing": {
+    "hero": {
+      "title": "Connect your exchange account and track your bot performance",
+      "subtitle": "IpotechTrade connects to your Binance or Bybit account via API (no withdrawal permissions). View profit, deposit and trading balance in your private dashboard.",
+      "ctaConnect": "Connect account",
+      "ctaMore": "Learn more"
+    },
+    "benefits": {
+      "benefit1": { "title": "Non-custodial", "desc": "Funds stay on your exchange. API keys are stored encrypted on our server and used only for spot trading." },
+      "benefit2": { "title": "Transparent PnL", "desc": "Your profit is calculated from closed deals coming directly from your exchange-linked records." },
+      "benefit3": { "title": "Simple setup", "desc": "Authorize via Telegram, paste API keys once, set bot balance — that's it." }
+    },
+    "hiw": {
+      "title": "How it works",
+      "step1": { "label": "Step 1", "text": "Log in to the app with your Telegram account or open it via our Telegram bot." },
+      "step2": { "label": "Step 2", "text": "Choose exchange (Binance or Bybit) and add API keys (Spot only; withdrawals disabled)." },
+      "step3": { "label": "Step 3", "text": "Set the amount the bot may trade (USDT)." },
+      "step4": { "label": "Step 4", "text": "Track profit and deposit in your dashboard." }
+    },
+    "note": "Subscribe to our Telegram channel: https://t.me/ipotechTrade"
+  },
+    "more": {
+    "hero": {
+      "title": "IpotechTrade — details",
+      "subtitle": "Connect your Binance or Bybit account via API with Spot-only permissions. You control the trading amount, the bot executes the strategy, and PnL & deposit are visible in your dashboard."
+    },
+    "hiw": {
+      "title": "How it works",
+      "step1": { "label": "Step 1", "text": "Sign in via Telegram — the web app opens authenticated." },
+      "step2": { "label": "Step 2", "text": "Choose an exchange (Binance or Bybit) and add API keys with Spot-only rights. Whitelisting IP is recommended." },
+      "step3": { "label": "Step 3", "text": "Set the USDT amount the bot may trade. You can change it anytime in Settings." },
+      "step4": { "label": "Step 4", "text": "Track closed PnL and your service deposit in the dashboard." }
+    },
+    "benefits": {
+      "title": "Benefits",
+      "b1": { "title": "Non-custodial", "text": "Funds remain on your exchange; API withdrawal rights are disabled." },
+      "b2": { "title": "Transparent PnL", "text": "Profit is based on closed trades associated with your account." },
+      "b3": { "title": "Fast setup", "text": "Add keys once, set trade amount — done." },
+      "b4": { "title": "Bilingual UI", "text": "Russian & English, Bybit-like light theme." }
+    },
+    "security": {
+      "title": "Security & API permissions",
+      "s1": { "title": "Spot only", "text": "Keys are created with spot trading permission only. Withdrawals are not allowed." },
+      "s2": { "title": "IP whitelist", "text": "We recommend restricting keys to a trusted IP listed in the instructions." },
+      "s3": { "title": "Encrypted at rest", "text": "API keys are stored encrypted on the server and used solely for trading." },
+      "s4": { "title": "You stay in control", "text": "Revoke keys on the exchange at any time — trading stops immediately." },
+      "note": "Algorithmic trading involves market risk and does not guarantee profit. Invest responsibly."
+    },
+    "fees": {
+      "title": "Deposit & fees",
+      "p1": "A separate in-service deposit is used to pay our fee. Balance and top-ups are available in your dashboard.",
+      "p2": "You configure the bot’s USDT trading amount, and you can start/stop trading as needed.",
+      "p3": "Payment details are shown directly in the top-up dialog; transactions are recorded in the “Deposit” section."
+    },
+    "ref": {
+      "title": "Referral program",
+      "text": "Invite friends using your Telegram referral link: newcomers receive a deposit bonus, and you get a percentage of their deposit top-ups."
+    },
+    "faq": {
+      "title": "FAQ",
+      "q1": { "q": "Can the bot withdraw funds?", "a": "No. Keys are issued without withdrawal rights. Funds remain on your exchange." },
+      "q2": { "q": "Which exchanges are supported?", "a": "Binance and Bybit. New venues will be announced." },
+      "q3": { "q": "What’s the minimum trading amount?", "a": "It depends on market conditions and settings; for Bybit the guide suggests ~500 USDT as a practical baseline." },
+      "q4": { "q": "Where do I see profit?", "a": "In the dashboard’s Profit card — based on closed trades including the service fee." },
+      "q5": { "q": "How to contact support?", "a": "Telegram: @IpotechSupport." }
+    },
+    "contacts": {
+      "title": "Contacts",
+      "text": "Support: @IpotechSupport on Telegram. For partnerships/integrations, message support and we’ll reach out."
+    }
+  },
+    "signin": {
+    "title": "Sign in via Telegram",
+    "subtitle": "To use the dashboard and settings, open this app from our Telegram bot. This securely verifies your identity.",
+    "openBot": "Open bot in Telegram",
+    "reload": "I’m already in Telegram — Reload",
+    "toHome": "Back to home",
+    "hint": "After opening the bot, tap “Open App”. If you’re already inside Telegram WebApp, just press “Reload”.",
+    "tryingToOpen": "You tried to open:"
+  },
+  "balanceEditor": {
+    "title": "Edit bot trading balance",
+    "description": "Enter a new value.",
+    "inputLabel": "Balance",
+    "saveBtn": "Save",
+    "success": "Balance updated",
+    "errorGeneric": "Failed to update balance"
+  },
+  "profitChart": {
+    "title": "Cumulative Profit Chart",
+    "subtitle": "Each trade result is added to the running total.",
+    "series": {
+      "cumulative": "Cumulative",
+      "profit": "Trade Profit"
+    },
+    "note": "Only closed trades are included.",
+    "loadError": "Failed to load profit data"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signOut": "Sign out"
+  },
+  "publicYield": {
+    "title": "Bot Yield (public account)",
+    "subtitle": "Cumulative return in percent.",
+    "seriesPct": "Return, %",
+    "note": "Only closed trades are included.",
+    "current": "Current return"
+  },
+  "keysGuide": {
+    "title": "Guide: creating API keys for Bybit & Binance",
+    "ipTitle": "IP allowlist:",
+    "ipText": "use this IP when creating your keys: {{ip}}",
+    "common": {
+      "title": "General recommendations",
+      "item1": "Create a dedicated key pair specifically for the bot.",
+      "item2": "Enable only trading permissions. Withdrawals must remain disabled.",
+      "item3": "Always enable IP allowlist and add {{ip}}.",
+      "item4": "Keep your keys secret. Never share your secret key."
+    },
+    "bybit": {
+      "step1": "Open Bybit → Profile → API Management / Create API key.",
+      "step2": "Key type: System generated (or the integrations option).",
+      "step3": "Permissions: enable Trade (spot/derivatives as needed), disable Withdraw.",
+      "step4": "Enable IP Whitelist and add {{ip}}.",
+      "step5": "Confirm creation (2FA/SMS/email).",
+      "step6": "Save API Key and Secret — the secret is shown only once."
+    },
+    "binance": {
+      "step1": "Open Binance → Profile → API Management / Create API key.",
+      "step2": "Give it a clear name (e.g., IpotechTrade Bot).",
+      "step3": "After creation, open key settings (Edit restrictions).",
+      "step4": "Check Enable Spot & Margin Trading (or required trading permissions).",
+      "step5": "Enable Restrict access to trusted IPs only and add {{ip}}.",
+      "step6": "Ensure Enable Withdrawals is disabled.",
+      "step7": "Save API Key and Secret Key — the secret is shown only once."
+    },
+    "form": {
+      "title": "What to enter in the connection form",
+      "item1": "Public API key → API Key.",
+      "item2": "Secret API key → Secret.",
+      "item3": "Bot trading balance → amount allocated for the bot (at least 500 USDT)."
+    },
+    "warning": "If you see authorization or IP restriction errors, verify that {{ip}} is on the allowlist and permissions are set correctly."
+  }
+}
