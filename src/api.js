@@ -3,6 +3,7 @@ import axios from 'axios'
 
 // по умолчанию ходим через прокси Vite → '/api'
 const baseURL = (import.meta.env.VITE_API_BASE?.trim()) || '/api'
+console.log('[api] baseURL =', baseURL)
 
 const api = axios.create({ baseURL })
 
