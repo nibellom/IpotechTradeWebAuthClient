@@ -1,0 +1,16 @@
+{
+    "headers": [
+      {
+        "source": "/(.*)",
+        "headers": [
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; script-src 'self' https://telegram.org 'unsafe-eval'; connect-src 'self' https://ipotechtradewebauth-nibellom.amvera.io; img-src 'self' data: https://*.telegram.org https://telegram.org; style-src 'self' 'unsafe-inline'; frame-src https://oauth.telegram.org; base-uri 'self'; form-action 'self'"
+          },
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "Referrer-Policy", "value": "no-referrer-when-downgrade" }
+        ]
+      }
+    ]
+  }
+  
