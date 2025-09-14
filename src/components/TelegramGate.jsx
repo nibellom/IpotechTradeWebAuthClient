@@ -15,7 +15,7 @@ export default function TelegramGate() {
 
   console.log('[TelegramGate] mount. bot =', bot)
   console.log('[TelegramGate] VITE_API_BASE =', import.meta.env.VITE_API_BASE)
-  console.log('[TelegramGate] VITE_PUBLIC_API =', import.meta.env.VITE_PUBLIC_API)
+  console.log('[TelegramGate] Using SAME-ORIGIN data-auth-url', `${window.location.origin}/api/auth/telegram/widget-authurl`)
 
   // Приём токена из резервного потока (data-auth-url → postMessage)
   useEffect(() => {
@@ -39,10 +39,10 @@ export default function TelegramGate() {
           return
         }
 
-        // Сохраняем токен
         localStorage.setItem('token', token)
         setToken(token)
         window.dispatchEvent(new Event('auth:login'))
+
         // Небольшая задержка, чтобы стор/профиль успели обновиться
         setTimeout(() => {
           navigate(location.state?.from?.pathname || '/settings', { replace: true })
@@ -71,22 +71,16 @@ export default function TelegramGate() {
     // ВАЖНО: НЕ используем data-onauth — работаем через data-auth-url + postMessage
     // script.setAttribute('data-onauth', 'onTelegramAuth')
 
-    // РЕЗЕРВНЫЙ поток (официальный): data-auth-url → сервер → postMessage в opener
-    const publicApi =
-      (import.meta.env.VITE_PUBLIC_API?.trim())
-      || (import.meta.env.VITE_API_BASE?.trim())
-      || `${window.location.origin}/api`
-    const authUrl = `${publicApi.replace(/\/+$/, '')}/auth/telegram/widget-authurl`
+    // Официальный резервный поток: data-auth-url → (rewrites на бэкенд) → postMessage
+    const authUrl = `${window.location.origin}/api/auth/telegram/widget-authurl`
     script.setAttribute('data-auth-url', authUrl)
 
-    // Добавим origin backend-а и oauth.telegram.org в allow-list (последний — чтобы убрать лишние ворнинги)
+    // Добавим origin oauth.telegram.org просто чтобы не спамили служебные postMessage-ы
     try {
-      const authOrigin = new URL(authUrl).origin
-      allowedOriginsRef.current.add(authOrigin)
       allowedOriginsRef.current.add('https://oauth.telegram.org')
       console.log('[TelegramGate] allowed postMessage origins =', [...allowedOriginsRef.current])
     } catch (e) {
-      console.warn('[TelegramGate] failed to parse authUrl:', authUrl, e?.message)
+      console.warn('[TelegramGate] failed to build allowedOrigins:', e?.message)
     }
 
     script.onload = () => console.log('[TelegramGate] widget script loaded')
@@ -96,7 +90,6 @@ export default function TelegramGate() {
     }
 
     if (ref.current) {
-      // На случай повторного монтирования — очищаем контейнер
       ref.current.innerHTML = ''
       ref.current.appendChild(script)
     } else {
