@@ -103,6 +103,59 @@ export default function TelegramGate() {
     }
   }, [bot, navigate, location.state])
 
+  useEffect(() => {
+    const handler = (ev) => {
+      try {
+        console.log('[DBG:message] from:', ev.origin, 'type=', ev?.data?.type, 'data=', ev.data)
+      } catch (e) {
+        console.warn('[DBG:message] parse error:', e)
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
+
+  useEffect(() => {
+    if (!ref.current) return
+  
+    const watchIframe = (iframe) => {
+      if (!iframe || iframe.__watched) return
+      iframe.__watched = true
+      try {
+        console.log('[DBG:iframe found] src =', iframe.getAttribute('src') || iframe.src)
+        iframe.addEventListener('load', () => {
+          console.log('[DBG:iframe load] src =', iframe.getAttribute('src') || iframe.src)
+        })
+        iframe.addEventListener('error', (e) => {
+          console.warn('[DBG:iframe error]', e)
+        })
+      } catch (e) {
+        console.warn('[DBG:iframe watch error]', e)
+      }
+    }
+  
+    // уже вставленный iframe
+    const existing = ref.current.querySelector('iframe')
+    if (existing) watchIframe(existing)
+  
+    // наблюдаем новые узлы (когда виджет дорендерит iframe)
+    const mo = new MutationObserver((muts) => {
+      for (const m of muts) {
+        m.addedNodes.forEach((n) => {
+          if (n && n.tagName === 'IFRAME') watchIframe(n)
+          if (n && n.querySelector) {
+            const ifr = n.querySelector('iframe')
+            if (ifr) watchIframe(ifr)
+          }
+        })
+      }
+    })
+    mo.observe(ref.current, { childList: true, subtree: true })
+    return () => mo.disconnect()
+  }, [ref])
+  
+  
+
   const devEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEV_LOGIN === '1'
 
   async function handleDevLogin() {
