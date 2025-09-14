@@ -21,13 +21,10 @@ export default function TelegramGate() {
   useEffect(() => {
     function onMsg(ev) {
       try {
-        // Сначала дешёвый фильтр — интересуют только наши события
-        if (!ev?.data || ev.data.type !== 'tg-auth') {
-          // Тихо игнорим шум (Metamask и т.п.)
-          return
-        }
+        // Интересуют только наши сообщения
+        if (!ev?.data || ev.data.type !== 'tg-auth') return
 
-        // Затем проверяем origin
+        // Проверяем origin
         const allowed = allowedOriginsRef.current
         const isAllowed = allowed.has(ev.origin)
         if (!isAllowed) {
@@ -36,14 +33,17 @@ export default function TelegramGate() {
         }
 
         console.log('[TelegramGate] tg-auth OK from', ev.origin)
-        if (!ev.data.token) {
+        const token = ev.data.token
+        if (!token) {
           console.warn('[TelegramGate] tg-auth without token, skip.')
           return
         }
 
-        localStorage.setItem('token', ev.data.token)
-        setToken(ev.data.token)
+        // Сохраняем токен
+        localStorage.setItem('token', token)
+        setToken(token)
         window.dispatchEvent(new Event('auth:login'))
+        // Небольшая задержка, чтобы стор/профиль успели обновиться
         setTimeout(() => {
           navigate(location.state?.from?.pathname || '/settings', { replace: true })
         }, 50)
@@ -62,55 +62,16 @@ export default function TelegramGate() {
       return
     }
 
-    // Основной JS-коллбэк виджета
-    window.onTelegramAuth = async (user) => {
-      console.log('[TelegramGate] onAuth fired. Raw user =', user)
-      setError('')
-      try {
-        const payload = {
-          id: String(user?.id ?? ''),
-          username: user?.username || '',
-          first_name: user?.first_name || '',
-          last_name: user?.last_name || '',
-          photo_url: user?.photo_url || '',
-          auth_date: String(user?.auth_date ?? ''),
-          hash: user?.hash || '',
-        }
-        console.log('[TelegramGate] normalized payload =', payload)
-
-        const { data } = await api.post('/auth/telegram/widget', payload, {
-          headers: { 'Content-Type': 'application/json' },
-        })
-        console.log('[TelegramGate] server responded:', data)
-
-        if (!data?.token) throw new Error('Empty token in response')
-        localStorage.setItem('token', data.token)
-        setToken(data.token)
-
-        window.dispatchEvent(new Event('auth:login'))
-        try {
-          await api.get('/users/me')
-          console.log('[TelegramGate] /users/me ok after login')
-        } catch (e) {
-          console.warn('[TelegramGate] /users/me after login failed:', e?.response?.status, e?.message)
-        }
-
-        navigate(location.state?.from?.pathname || '/settings', { replace: true })
-      } catch (e) {
-        console.error('[TelegramGate] Widget POST auth failed:', e?.response?.status, e?.response?.data || e?.message)
-        setError('Не удалось авторизоваться через Telegram. Попробуйте ещё раз.')
-      }
-    }
-
     // Встраиваем виджет Telegram
     const script = document.createElement('script')
     script.src = 'https://telegram.org/js/telegram-widget.js?22'
     script.async = true
-    script.setAttribute('data-telegram-login', bot)
+    script.setAttribute('data-telegram-login', bot) // имя бота без "@"
     script.setAttribute('data-size', 'large')
-    script.setAttribute('data-onauth', 'onTelegramAuth')
+    // ВАЖНО: НЕ используем data-onauth — работаем через data-auth-url + postMessage
+    // script.setAttribute('data-onauth', 'onTelegramAuth')
 
-    // РЕЗЕРВНЫЙ поток (data-auth-url)
+    // РЕЗЕРВНЫЙ поток (официальный): data-auth-url → сервер → postMessage в opener
     const publicApi =
       (import.meta.env.VITE_PUBLIC_API?.trim())
       || (import.meta.env.VITE_API_BASE?.trim())
@@ -118,7 +79,7 @@ export default function TelegramGate() {
     const authUrl = `${publicApi.replace(/\/+$/, '')}/auth/telegram/widget-authurl`
     script.setAttribute('data-auth-url', authUrl)
 
-    // Добавим origin backend-а и oauth.telegram.org в allow-list
+    // Добавим origin backend-а и oauth.telegram.org в allow-list (последний — чтобы убрать лишние ворнинги)
     try {
       const authOrigin = new URL(authUrl).origin
       allowedOriginsRef.current.add(authOrigin)
@@ -135,6 +96,7 @@ export default function TelegramGate() {
     }
 
     if (ref.current) {
+      // На случай повторного монтирования — очищаем контейнер
       ref.current.innerHTML = ''
       ref.current.appendChild(script)
     } else {
@@ -142,7 +104,6 @@ export default function TelegramGate() {
     }
 
     return () => {
-      delete window.onTelegramAuth
       if (ref.current?.firstChild) {
         ref.current.removeChild(ref.current.firstChild)
       }
