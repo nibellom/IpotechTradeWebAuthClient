@@ -32,6 +32,7 @@ export default function TelegramGate() {
 
     // Основной JS-коллбэк виджета
     window.onTelegramAuth = async (user) => {
+      console.log('[TG] onAuth fired, user =', user)
       setError('')
       try {
         // ВНИМАНИЕ: предполагается, что VITE_API_BASE = '/api' в client/.env.development
