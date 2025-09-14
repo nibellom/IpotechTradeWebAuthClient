@@ -10,6 +10,9 @@ export default function TelegramGate() {
   const [error, setError] = useState('')
   const bot = import.meta.env.VITE_TELEGRAM_BOT || 'ipotechTradeAuthDevBot'
 
+  // Будем хранить разрешённые origin здесь (используется в onMessage)
+  const allowedOriginsRef = useRef(new Set([window.location.origin]))
+
   console.log('[TelegramGate] mount. bot =', bot)
   console.log('[TelegramGate] VITE_API_BASE =', import.meta.env.VITE_API_BASE)
   console.log('[TelegramGate] VITE_PUBLIC_API =', import.meta.env.VITE_PUBLIC_API)
@@ -18,23 +21,19 @@ export default function TelegramGate() {
   useEffect(() => {
     function onMsg(ev) {
       try {
-        // Разрешаем только свой же origin (включая dev/preview)
-        const allowedOrigins = [
-          window.location.origin,
-          import.meta.env.VITE_PUBLIC_ORIGIN?.trim(),
-        ].filter(Boolean)
-        if (!allowedOrigins.includes(ev.origin)) {
-          console.warn('[TelegramGate] postMessage from unexpected origin:', ev.origin)
+        const allowed = allowedOriginsRef.current
+        const isAllowed = allowed.has(ev.origin)
+        if (!isAllowed) {
+          console.warn('[TelegramGate] postMessage from unexpected origin:', ev.origin, 'allowed =', [...allowed])
           return
         }
 
+        console.log('[TelegramGate] postMessage origin OK:', ev.origin, 'data =', ev.data)
         if (ev?.data?.type === 'tg-auth' && ev.data.token) {
-          console.log('[TelegramGate] postMessage received token (reserve flow).')
+          console.log('[TelegramGate] token received via reserve flow.')
           localStorage.setItem('token', ev.data.token)
           setToken(ev.data.token)
-          // событие для App — подтянуть профиль
           window.dispatchEvent(new Event('auth:login'))
-          // небольшой таймаут, чтобы успел прилететь первый /me
           setTimeout(() => {
             navigate(location.state?.from?.pathname || '/settings', { replace: true })
           }, 50)
@@ -54,12 +53,11 @@ export default function TelegramGate() {
       return
     }
 
-    // Основной JS-коллбэк виджета — ДОЛЖЕН быть в window к моменту загрузки скрипта
+    // Основной JS-коллбэк виджета
     window.onTelegramAuth = async (user) => {
       console.log('[TelegramGate] onAuth fired. Raw user =', user)
       setError('')
       try {
-        // На некоторых браузерах id/username могут быть нестрогих типов — нормализуем
         const payload = {
           id: String(user?.id ?? ''),
           username: user?.username || '',
@@ -76,15 +74,11 @@ export default function TelegramGate() {
         })
         console.log('[TelegramGate] server responded:', data)
 
-        if (!data?.token) {
-          throw new Error('Empty token in response')
-        }
+        if (!data?.token) throw new Error('Empty token in response')
         localStorage.setItem('token', data.token)
         setToken(data.token)
 
-        // Для Safari: дополнительные «пинки» состоянию приложения
         window.dispatchEvent(new Event('auth:login'))
-        // Мгновенно пробуем дернуть /users/me (если у вас так устроено)
         try {
           await api.get('/users/me')
           console.log('[TelegramGate] /users/me ok after login')
@@ -103,9 +97,9 @@ export default function TelegramGate() {
     const script = document.createElement('script')
     script.src = 'https://telegram.org/js/telegram-widget.js?22'
     script.async = true
-    script.setAttribute('data-telegram-login', bot)       // имя бота без "@"
+    script.setAttribute('data-telegram-login', bot)
     script.setAttribute('data-size', 'large')
-    script.setAttribute('data-onauth', 'onTelegramAuth')  // основной поток (JS-коллбэк)
+    script.setAttribute('data-onauth', 'onTelegramAuth')
 
     // РЕЗЕРВНЫЙ поток (data-auth-url)
     const publicApi =
@@ -115,8 +109,14 @@ export default function TelegramGate() {
     const authUrl = `${publicApi.replace(/\/+$/, '')}/auth/telegram/widget-authurl`
     script.setAttribute('data-auth-url', authUrl)
 
-    // Можно включить запрос write-доступа, если понадобится
-    // script.setAttribute('data-request-access', 'write')
+    // ВАЖНО: добавить origin backend-а (из data-auth-url) в allow-list для postMessage
+    try {
+      const authOrigin = new URL(authUrl).origin
+      allowedOriginsRef.current.add(authOrigin)
+      console.log('[TelegramGate] allowed postMessage origins =', [...allowedOriginsRef.current])
+    } catch (e) {
+      console.warn('[TelegramGate] failed to parse authUrl:', authUrl, e?.message)
+    }
 
     script.onload = () => console.log('[TelegramGate] widget script loaded')
     script.onerror = () => {
@@ -124,7 +124,7 @@ export default function TelegramGate() {
       setError('Не удалось загрузить виджет Telegram')
     }
 
-    // На случай повторного монтирования — очищаем контейнер
+    // Очистим контейнер и прикрепим виджет
     if (ref.current) {
       ref.current.innerHTML = ''
       ref.current.appendChild(script)
@@ -132,7 +132,15 @@ export default function TelegramGate() {
       console.warn('[TelegramGate] ref is null, widget not appended')
     }
 
+    // Диагностический перехват клика по виджету (временно, можно удалить)
+    const clickTrap = (e) => {
+      const btn = e.target?.closest('.tgme_widget_login_button')
+      if (btn) console.log('[TelegramGate] widget button clicked')
+    }
+    document.addEventListener('click', clickTrap, true)
+
     return () => {
+      document.removeEventListener('click', clickTrap, true)
       delete window.onTelegramAuth
       if (ref.current?.firstChild) {
         ref.current.removeChild(ref.current.firstChild)
