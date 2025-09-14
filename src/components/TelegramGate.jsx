@@ -8,7 +8,7 @@ export default function TelegramGate() {
   const navigate = useNavigate()
   const location = useLocation()
   const [error, setError] = useState('')
-  const bot = import.meta.env.VITE_TELEGRAM_BOT || 'IpotechTradeBot'
+  const bot = import.meta.env.VITE_TELEGRAM_BOT || 'ipotechTradeAuthDevBot'
   console.log('Bot name: ', bot)
 
   // Приём токена из резервного потока (data-auth-url → postMessage)
@@ -59,10 +59,14 @@ export default function TelegramGate() {
     // РЕЗЕРВНЫЙ поток: Telegram откроет новое окно с GET на этот URL.
     // Сервер проверит подпись, вернёт токен и отправит его обратно сюда через postMessage.
     // ВАЖНО: это навигация браузера, не axios — поэтому здесь НУЖЕН префикс /api.
-    const authUrl = `${window.location.origin}/api/auth/telegram/widget-authurl`
+    // РЕЗЕРВНЫЙ поток: укажем АБСОЛЮТНЫЙ URL бэкенда
+    const publicApi = (import.meta.env.VITE_PUBLIC_API?.trim())
+      || (import.meta.env.VITE_API_BASE?.trim())         // если это уже абсолютное https://.../api
+      || `${window.location.origin}/api`
+    const authUrl = `${publicApi.replace(/\/+$/, '')}/auth/telegram/widget-authurl`
     script.setAttribute('data-auth-url', authUrl)
-
-    script.setAttribute('data-request-access', 'write')          // опционально
+    // На время отладки уберём требование write-доступа
+    // script.setAttribute('data-request-access', 'write')
 
     script.onload = () => console.log('[TelegramGate] widget script loaded')
     script.onerror = () => setError('Не удалось загрузить виджет Telegram')
