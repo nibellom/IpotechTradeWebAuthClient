@@ -1,13 +1,14 @@
-import { Box, Card, CardContent, Typography, Stack, Button } from '@mui/material'
+import { Box, Card, CardContent, Typography, Stack, Button, Alert } from '@mui/material'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 export default function SignInTelegram() {
   const { t } = useTranslation('translation', { keyPrefix: 'signin' })
   const location = useLocation()
-  const bot = import.meta.env.VITE_TELEGRAM_BOT || 'IpotechTradeBot'
-  // универсальная deep-link ссылка; при наличии WebApp у бота сработает startapp
+  const bot = import.meta.env.VITE_TELEGRAM_BOT || 'ipotechTradeAuthDevBot'
   const tgLink = `https://t.me/${bot}?startapp=1`
+
+  const hintPath = location.state?.from?.pathname
 
   return (
     <Box sx={{ maxWidth: 720, mx: 'auto' }}>
@@ -32,10 +33,10 @@ export default function SignInTelegram() {
             {t('hint')}
           </Typography>
 
-          {location.state?.from?.pathname && (
-            <Typography variant="caption" sx={{ display:'block', mt:1, opacity:.6 }}>
-              {t('tryingToOpen')} {location.state.from.pathname}
-            </Typography>
+          {hintPath && (
+            <Alert severity="info" sx={{ mt:1 }}>
+              {t('tryingToOpen')} <b>{hintPath}</b>
+            </Alert>
           )}
         </CardContent>
       </Card>
