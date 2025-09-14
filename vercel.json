@@ -5,7 +5,7 @@
         "headers": [
           {
             "key": "Content-Security-Policy",
-            "value": "default-src 'self'; script-src 'self' https://telegram.org 'unsafe-eval'; connect-src 'self' https://ipotechtradewebauth-nibellom.amvera.io; img-src 'self' data: https://*.telegram.org https://telegram.org; style-src 'self' 'unsafe-inline'; frame-src https://oauth.telegram.org; base-uri 'self'; form-action 'self'"
+            "value": "default-src 'self'; script-src 'self' https://telegram.org https://www.googletagmanager.com 'unsafe-eval'; script-src-elem 'self' https://telegram.org https://www.googletagmanager.com 'unsafe-eval'; connect-src 'self' https://ipotechtradewebauth-nibellom.amvera.io https://www.google-analytics.com https://region1.google-analytics.com https://stats.g.doubleclick.net wss:; img-src 'self' data: https://*.telegram.org https://telegram.org https://www.google-analytics.com https://stats.g.doubleclick.net; style-src 'self' 'unsafe-inline'; frame-src https://oauth.telegram.org; base-uri 'self'; form-action 'self'; worker-src 'self' blob:"
           },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
           { "key": "Referrer-Policy", "value": "no-referrer-when-downgrade" }
