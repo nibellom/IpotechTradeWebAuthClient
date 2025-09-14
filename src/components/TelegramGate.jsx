@@ -9,6 +9,7 @@ export default function TelegramGate() {
   const location = useLocation()
   const [error, setError] = useState('')
   const bot = import.meta.env.VITE_TELEGRAM_BOT || 'IpotechTradeBot'
+  console.log('Bot name: ', bot)
 
   // Приём токена из резервного потока (data-auth-url → postMessage)
   useEffect(() => {
