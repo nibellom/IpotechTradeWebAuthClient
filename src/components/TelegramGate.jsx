@@ -125,7 +125,7 @@ export default function TelegramGate() {
     // Режим колбэка:
     script.setAttribute('data-onauth', 'onTelegramAuth(user)')
     // Бэкап: редирект на наш сервер (popup вернёт postMessage с токеном)
-    const authUrl = `${origin}/api/auth/telegram/widget-authurl`
+    const authUrl = `${origin}/auth/telegram/widget-authurl`
     script.setAttribute('data-auth-url', authUrl)
 
     console.log('[TG] widget attrs:', {
