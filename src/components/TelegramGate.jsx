@@ -5,31 +5,70 @@ import api, { setToken } from '../api.js'
 
 export default function TelegramGate() {
   const ref = useRef(null)
+  const popupRef = useRef(null)
   const navigate = useNavigate()
   const location = useLocation()
   const [error, setError] = useState('')
-  const bot = import.meta.env.VITE_TELEGRAM_BOT || 'ipotechTradeAuthDevBot'
 
-  const allowedOriginsRef = useRef(new Set([window.location.origin]))
+  const botUsername = import.meta.env.VITE_TELEGRAM_BOT || 'ipotechTradeAuthDevBot'
+  const botId = import.meta.env.VITE_TELEGRAM_BOT_ID // ← ОБЯЗАТЕЛЬНО задать в .env
+  const origin = window.location.origin
 
-  console.log('[TG] mount. bot =', bot)
+  const allowedOriginsRef = useRef(new Set([origin, 'https://oauth.telegram.org']))
+
+  console.log('[TG] mount. bot =', botUsername)
+  console.log('[TG] botId =', botId)
   console.log('[TG] VITE_API_BASE =', import.meta.env.VITE_API_BASE)
 
-  // ЛОГИРУЕМ все postMessage для диагностики (канал data-auth-url → postMessage из popup)
+  // ===== 1) Универсальный обработчик postMessage (popup и debug из widget-authurl)
   useEffect(() => {
-    const handler = (ev) => {
+    async function handleAuthUser(user) {
+      try {
+        console.log('[TG] handleAuthUser:', user)
+        setError('')
+        const { data } = await api.post('/auth/telegram/widget', user)
+        console.log('[TG] /auth/telegram/widget →', data)
+        if (!data?.token) throw new Error('Empty token in auth response')
+        localStorage.setItem('token', data.token)
+        setToken(data.token)
+        window.dispatchEvent(new Event('auth:login'))
+        try {
+          await api.get('/users/me')
+          console.log('[TG] /users/me ok after login')
+        } catch (e) {
+          console.warn('[TG] /users/me failed:', e?.response?.status, e?.message)
+        }
+        navigate(location.state?.from?.pathname || '/settings', { replace: true })
+      } catch (e) {
+        console.error('[TG] handleAuthUser failed:', e?.response?.status, e?.response?.data || e?.message)
+        setError('Не удалось войти через Telegram. Проверьте домен/токен бота и попробуйте снова.')
+      } finally {
+        try { popupRef.current?.close() } catch {}
+      }
+    }
+
+    const onMessage = (ev) => {
+      // Логируем всё
       console.log('[DBG:message]', ev.origin, ev?.data?.type || '(no type)', ev.data)
-      // Основной поток postMessage — 'tg-auth'
+
+      // 1a) Резерв: popup с oauth.telegram.org шлёт JSON строкой {event:'auth_user', user:{...}}
+      if (ev.origin === 'https://oauth.telegram.org') {
+        let payload = ev.data
+        try { if (typeof payload === 'string') payload = JSON.parse(payload) } catch {}
+        if (payload && payload.event === 'auth_user' && payload.user?.hash) {
+          console.log('[TG] got auth_user from popup')
+          return handleAuthUser(payload.user)
+        }
+      }
+
+      // 1b) Канал от /widget-authurl (popup → сервер → postMessage в opener)
       if (ev?.data?.type === 'tg-auth') {
         if (!allowedOriginsRef.current.has(ev.origin)) {
-          console.warn('[TG] tg-auth from unexpected origin:', ev.origin, 'allowed=', [...allowedOriginsRef.current])
+          console.warn('[TG] tg-auth from unexpected origin:', ev.origin)
           return
         }
         const token = ev.data.token
-        if (!token) {
-          console.warn('[TG] tg-auth without token')
-          return
-        }
+        if (!token) return console.warn('[TG] tg-auth without token')
         localStorage.setItem('token', token)
         setToken(token)
         window.dispatchEvent(new Event('auth:login'))
@@ -38,74 +77,59 @@ export default function TelegramGate() {
         }, 50)
       }
 
-      // Диагностический канал от сервера — 'tg-auth-debug'
       if (ev?.data?.type === 'tg-auth-debug') {
         console.warn('[TG][DEBUG from server]', ev.data)
       }
     }
-    window.addEventListener('message', handler)
-    return () => window.removeEventListener('message', handler)
+
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
   }, [navigate, location.state])
 
+  // ===== 2) Инициализация виджета: onAuth + auth-url
   useEffect(() => {
-    // --- Глобальный onAuth (вызывается самим виджетом) ---
+    // Глобальный onAuth: дергается самим виджетом
     async function onTelegramAuth(user) {
       console.log('[TG] onAuth callback payload:', user)
+      // тот же обработчик
+      const evt = new MessageEvent('message', { origin, data: { fake: true } }) // для единообразия логов
+      window.dispatchEvent(evt)
+      // напрямую отправляем на сервер
       try {
-        setError('')
-        // Отправляем объект user (id/username/first_name/last_name/auth_date/hash/…) на сервер
         const { data } = await api.post('/auth/telegram/widget', user)
         console.log('[TG] onAuth server response:', data)
-
         if (!data?.token) throw new Error('Empty token in /auth/telegram/widget response')
-
         localStorage.setItem('token', data.token)
         setToken(data.token)
         window.dispatchEvent(new Event('auth:login'))
-
-        try {
-          await api.get('/users/me')
-          console.log('[TG] /users/me ok after onAuth login')
-        } catch (e) {
-          console.warn('[TG] /users/me after onAuth failed:', e?.response?.status, e?.message)
-        }
-
         navigate(location.state?.from?.pathname || '/settings', { replace: true })
       } catch (e) {
         console.error('[TG] onAuth failed:', e?.response?.status, e?.response?.data || e?.message)
-        setError('Не удалось войти через Telegram (onauth). Проверьте, что домен и токен бота заданы верно.')
+        setError('Не удалось войти через Telegram (onauth).')
       }
     }
-    // Виджет вызывает window.onTelegramAuth по ИМЕНИ
     window.onTelegramAuth = onTelegramAuth
     console.log('[TG] window.onTelegramAuth attached:', typeof window.onTelegramAuth)
 
-    // Если это Telegram WebApp — виджет не нужен (идёт другой поток /auth/telegram/webapp)
+    // Если открыто внутри Telegram WebApp — другой поток (обрабатывается в App.jsx)
     if (window.Telegram?.WebApp?.initData) {
       console.log('[TG] detected Telegram WebApp, skip widget.')
       return () => { try { delete window.onTelegramAuth } catch {} }
     }
 
-    // --- Инициализация виджета ---
     const script = document.createElement('script')
     script.src = 'https://telegram.org/js/telegram-widget.js?22'
     script.async = true
-    script.setAttribute('data-telegram-login', bot)
+    script.setAttribute('data-telegram-login', botUsername)
     script.setAttribute('data-size', 'large')
-
-    // КЛЮЧЕВАЯ СТРОКА: выражение с параметром user
+    // Режим колбэка:
     script.setAttribute('data-onauth', 'onTelegramAuth(user)')
-
-    // Бэкап-канал: попап → GET /widget-authurl → postMessage(token)
-    const authUrl = `${window.location.origin}/api/auth/telegram/widget-authurl`
+    // Бэкап: редирект на наш сервер (popup вернёт postMessage с токеном)
+    const authUrl = `${origin}/api/auth/telegram/widget-authurl`
     script.setAttribute('data-auth-url', authUrl)
 
-    // Разрешённые источники для postMessage
-    allowedOriginsRef.current.add('https://oauth.telegram.org')
-    allowedOriginsRef.current.add(window.location.origin)
-
     console.log('[TG] widget attrs:', {
-      'data-telegram-login': bot,
+      'data-telegram-login': botUsername,
       'data-size': 'large',
       'data-onauth': 'onTelegramAuth(user)',
       'data-auth-url': authUrl,
@@ -125,7 +149,7 @@ export default function TelegramGate() {
       console.warn('[TG] ref is null, widget not appended')
     }
 
-    // Отслеживаем появление iframe и его src
+    // лог iframe
     const mo = new MutationObserver(() => {
       const iframe = ref.current?.querySelector('iframe')
       if (iframe && !iframe.__dbg) {
@@ -148,7 +172,36 @@ export default function TelegramGate() {
       }
       try { delete window.onTelegramAuth } catch {}
     }
-  }, [bot, navigate, location.state])
+  }, [botUsername, navigate, location.state])
+
+  // ===== 3) Fallback-кнопка: открываем oauth.telegram.org в попапе и ловим postMessage
+  function openPopupLogin() {
+    try {
+      if (!botId) {
+        setError('VITE_TELEGRAM_BOT_ID не задан — fallback-поток недоступен.')
+        return
+      }
+      setError('')
+      const url =
+        `https://oauth.telegram.org/auth` +
+        `?bot_id=${encodeURIComponent(botId)}` +
+        `&origin=${encodeURIComponent(origin)}` +
+        `&return_to=${encodeURIComponent(origin + '/signin')}` +
+        `&embed=1&request_access=write`
+      const w = 550, h = 600
+      const left = Math.max(0, (window.screen.width - w) / 2)
+      const top = Math.max(0, (window.screen.height - h) / 2)
+      popupRef.current = window.open(
+        url,
+        'tg_oauth_popup',
+        `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`
+      )
+      console.log('[TG] popup opened:', url)
+    } catch (e) {
+      console.error('[TG] popup open failed:', e)
+      setError('Браузер заблокировал всплывающее окно. Разрешите popups для этого домена.')
+    }
+  }
 
   const devEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEV_LOGIN === '1'
 
@@ -157,27 +210,16 @@ export default function TelegramGate() {
       setError('')
       const tgId = import.meta.env.VITE_DEV_TGID || '999000'
       const username = import.meta.env.VITE_DEV_USERNAME || 'AlekseyDev'
-
       console.log('[TG] DEV login start...')
       const { data } = await api.post('/auth/dev/login',
         { tgId, username, firstName: 'Dev', lastName: 'User' },
         { headers: { 'x-dev-auth': import.meta.env.VITE_DEV_AUTH_HEADER || '' } }
       )
       console.log('[TG] DEV login response:', data)
-
       if (!data?.token) throw new Error('Empty token in dev response')
-
       localStorage.setItem('token', data.token)
       setToken(data.token)
       window.dispatchEvent(new Event('auth:login'))
-
-      try {
-        await api.get('/users/me')
-        console.log('[TG] /users/me ok after DEV login')
-      } catch (e) {
-        console.warn('[TG] /users/me after DEV login failed:', e?.response?.status, e?.message)
-      }
-
       navigate(location.state?.from?.pathname || '/settings', { replace: true })
     } catch (e) {
       console.error('[TG] Dev login failed:', e?.response?.status, e?.response?.data || e?.message)
@@ -198,11 +240,20 @@ export default function TelegramGate() {
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-          {/* Здесь появится кнопка Telegram Login Widget */}
+          {/* Кнопка/iframe виджета */}
           <div ref={ref} />
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 3 }}>
             <Button variant="text" component={Link} to="/">На главную</Button>
+
+            {/* Fallback: прямой pop-up OAuth (ловим postMessage auth_user) */}
+            <Tooltip title="Альтернативный поток, если кнопка выше не завершает вход">
+              <span>
+                <Button variant="outlined" onClick={openPopupLogin} disabled={!botId}>
+                  Войти через Telegram (попап)
+                </Button>
+              </span>
+            </Tooltip>
 
             {devEnabled && (
               <Tooltip title="Фейковый вход для разработки, не используется на проде">
