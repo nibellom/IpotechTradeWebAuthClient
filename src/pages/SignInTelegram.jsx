@@ -10,6 +10,20 @@ export default function SignInTelegram() {
 
   const hintPath = location.state?.from?.pathname
 
+  useEffect(() => {
+    const onMsg = (ev) => {
+      if (ev?.data?.type === 'tg-auth' && ev.data.token) {
+        localStorage.setItem('token', ev.data.token)
+        setToken(ev.data.token)
+        window.dispatchEvent(new Event('auth:login'))
+        navigate('/settings', { replace: true })
+      }
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [])
+  
+
   return (
     <Box sx={{ maxWidth: 720, mx: 'auto' }}>
       <Card>
