@@ -1,4 +1,3 @@
-// client/src/components/TelegramGate.jsx
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Box, Card, CardContent, Typography, Stack, Button, Alert, Tooltip } from '@mui/material'
@@ -11,13 +10,11 @@ export default function TelegramGate() {
   const [error, setError] = useState('')
 
   const botUsername = import.meta.env.VITE_TELEGRAM_BOT || 'ipotechTradeAuthDevBot'
-  // callback на вашем сервере (возвращает мини-страницу с postMessage)
   const authUrl = `${window.location.origin}/api/auth/telegram/callback`
 
-  // Принимаем токен из /callback (postMessage) и логинимся в SPA
+  // 1) Примем токен через postMessage (основной канал)
   useEffect(() => {
     const onMessage = (ev) => {
-      // токен шлёт страница с того же origin (через Vercel rewrite)
       if (ev?.data?.type === 'tg-auth' && typeof ev.data.token === 'string') {
         localStorage.setItem('token', ev.data.token)
         setToken(ev.data.token)
@@ -29,37 +26,46 @@ export default function TelegramGate() {
     return () => window.removeEventListener('message', onMessage)
   }, [navigate, location.state])
 
-  // Рендерим официальный виджет только с data-auth-url
+  // 2) Резерв: поймаем запись в localStorage('tg_token') из /callback (сработает даже без opener)
   useEffect(() => {
-    if (window.Telegram?.WebApp?.initData) return // внутри Telegram WebApp виджет не нужен
+    const onStorage = (e) => {
+      if (e.key === 'tg_token' && e.newValue) {
+        localStorage.setItem('token', e.newValue)
+        setToken(e.newValue)
+        window.dispatchEvent(new Event('auth:login'))
+        navigate(location.state?.from?.pathname || '/settings', { replace: true })
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [navigate, location.state])
 
+  // Рендерим виджет в режиме data-auth-url
+  useEffect(() => {
+    if (window.Telegram?.WebApp?.initData) return
     const s = document.createElement('script')
     s.src = 'https://telegram.org/js/telegram-widget.js?22'
     s.async = true
-    s.setAttribute('data-telegram-login', botUsername) // без @
+    s.setAttribute('data-telegram-login', botUsername)
     s.setAttribute('data-size', 'large')
-    s.setAttribute('data-auth-url', authUrl)           // ключевое
-    s.setAttribute('data-request-access', 'write')     // просим право писать (рекомендуется)
+    s.setAttribute('data-auth-url', authUrl)       // ключевой канал
+    s.setAttribute('data-request-access', 'write') // рекомендовано
     s.onerror = () => setError('Не удалось загрузить Telegram Login Widget')
-
     if (ref.current) {
       ref.current.innerHTML = ''
       ref.current.appendChild(s)
     }
-    return () => {
-      if (ref.current?.firstChild) ref.current.removeChild(ref.current.firstChild)
-    }
+    return () => { if (ref.current?.firstChild) ref.current.removeChild(ref.current.firstChild) }
   }, [botUsername, authUrl])
 
-  // Кнопка Dev-входа (по заголовку x-dev-auth)
+  // Dev-вход
   const devEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEV_LOGIN === '1'
   async function handleDevLogin() {
     try {
       setError('')
       const tgId = import.meta.env.VITE_DEV_TGID || '999000'
       const username = import.meta.env.VITE_DEV_USERNAME || 'DevUser'
-      const { data } = await api.post(
-        '/auth/dev/login',
+      const { data } = await api.post('/auth/dev/login',
         { tgId, username, firstName: 'Dev', lastName: 'User' },
         { headers: { 'x-dev-auth': import.meta.env.VITE_DEV_AUTH_HEADER || '' } }
       )
@@ -69,7 +75,6 @@ export default function TelegramGate() {
       window.dispatchEvent(new Event('auth:login'))
       navigate(location.state?.from?.pathname || '/settings', { replace: true })
     } catch (e) {
-      console.error('[TG] Dev login failed:', e?.response?.status, e?.response?.data || e?.message)
       setError('Dev-вход не удался. Проверьте DEV_AUTH_SECRET на сервере.')
     }
   }
@@ -84,15 +89,12 @@ export default function TelegramGate() {
           </Typography>
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-          {/* Здесь появится кнопка Telegram Login Widget */}
           <div ref={ref} />
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 3 }}>
             <Button variant="text" component={Link} to="/">На главную</Button>
-
             {devEnabled && (
-              <Tooltip title="Фейковый вход для разработки (только для DEV окружения)">
+              <Tooltip title="Фейковый вход для разработки">
                 <Button variant="outlined" color="secondary" onClick={handleDevLogin}>
                   Войти (DEV)
                 </Button>
