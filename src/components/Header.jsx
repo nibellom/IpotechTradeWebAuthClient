@@ -11,10 +11,11 @@ import {
 } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Link as RouterLink, useNavigate } from 'react-router-dom'
 import { setToken } from '../api'
 import MenuIcon from '@mui/icons-material/Menu'
 import TranslateIcon from '@mui/icons-material/Translate'
+import logo from '../assets/brand/itrade-logo.png';
 
 export default function Header({ authed, me, onLogout }) {
   const { i18n, t } = useTranslation()
@@ -46,14 +47,22 @@ export default function Header({ authed, me, onLogout }) {
       sx={{ borderBottom: '1px solid #22262b', backdropFilter: 'blur(4px)' }}
     >
       <Toolbar sx={{ display: 'flex', gap: 2 }}>
-        <Typography
-          variant="h6"
-          sx={{ flexGrow: 1, cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}
-          component={Link}
-          to="/"
-        >
-          IpotechTrade
-        </Typography>
+      <Typography
+        variant="h6"
+        component={RouterLink}
+        to="/"
+        sx={{
+          flexGrow: 1,
+          cursor: 'pointer',
+          textDecoration: 'none',
+          color: 'inherit',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.25
+        }}
+      >
+        <Box component="img" src={logo} alt="iTrade" sx={{ height: 28, display: 'block' }} />
+      </Typography>
 
         {/* ДЕСКТОП (md+) */}
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
