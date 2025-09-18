@@ -12,20 +12,6 @@ export default function TelegramGate() {
   const botUsername = import.meta.env.VITE_TELEGRAM_BOT || 'ipotechTradeAuthDevBot'
   const authUrl = `${window.location.origin}/api/auth/telegram/callback`
 
-  useEffect(() => {
-    // ловим токен из фрагмента URL, который прислал сервер
-    const m = window.location.hash.match(/tg_jwt=([^&]+)/)
-    if (m) {
-      const token = decodeURIComponent(m[1])
-      localStorage.setItem('token', token)
-      setToken(token)
-      // чистим hash, чтобы не светился
-      window.history.replaceState(null, '', window.location.pathname + window.location.search)
-      window.dispatchEvent(new Event('auth:login'))
-      navigate(location.state?.from?.pathname || '/settings', { replace: true })
-    }
-  }, [navigate, location.state])
-
   // 1) Примем токен через postMessage (основной канал)
   useEffect(() => {
     const onMessage = (ev) => {

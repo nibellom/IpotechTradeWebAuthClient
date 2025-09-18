@@ -34,6 +34,19 @@ export default function App() {
     window.dispatchEvent(new Event('auth:logout'))
   }
 
+  useEffect(() => {
+    const m = window.location.hash.match(/tg_jwt=([^&]+)/)
+    if (m) {
+      const token = decodeURIComponent(m[1])
+      localStorage.setItem('token', token)
+      setToken(token)
+      // чистим хэш из адресной строки
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      // сразу подтягиваем профиль и завершаем booting
+      fetchMeWith(token)
+    }
+  }, [fetchMeWith])
+
   // GA init (один раз)
   useEffect(() => {
     initGA()
