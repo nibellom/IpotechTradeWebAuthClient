@@ -9,22 +9,17 @@ import api, { setToken } from './api.js'
 import TelegramGate from './components/TelegramGate.jsx'
 import More from './pages/More.jsx'
 import ApiKeysGuide from './pages/ApiKeysGuide.jsx'
-
-// ⬇️ GA4
 import { initGA, sendPageview } from './analytics'
 
 function Protected({ authed, children }) {
   const location = useLocation()
-  if (!authed) {
-    return <Navigate to="/signin" replace state={{ from: location }} />
-  }
+  if (!authed) return <Navigate to="/signin" replace state={{ from: location }} />
   return children
 }
 
 export default function App() {
   const [booting, setBooting] = useState(true)
   const [me, setMe] = useState(null)
-
   const authed = useMemo(() => Boolean(me), [me])
 
   function handleLogout() {
@@ -34,25 +29,7 @@ export default function App() {
     window.dispatchEvent(new Event('auth:logout'))
   }
 
-  useEffect(() => {
-    const m = window.location.hash.match(/tg_jwt=([^&]+)/)
-    if (m) {
-      const token = decodeURIComponent(m[1])
-      localStorage.setItem('token', token)
-      setToken(token)
-      // чистим хэш из адресной строки
-      window.history.replaceState(null, '', window.location.pathname + window.location.search)
-      // сразу подтягиваем профиль и завершаем booting
-      fetchMeWith(token)
-    }
-  }, [fetchMeWith])
-
-  // GA init (один раз)
-  useEffect(() => {
-    initGA()
-  }, [])
-
-  // Универсальная функция авторизации по токену
+  // ⬇️ ВАЖНО: объявляем fetchMeWith ДО всех useEffect, которые его используют
   const fetchMeWith = useMemo(() => {
     return async (token) => {
       try {
@@ -70,7 +47,24 @@ export default function App() {
     }
   }, [])
 
-  // Инициализация auth: localStorage или Telegram initData
+  // Парсим токен, присланный сервером в #tg_jwt
+  useEffect(() => {
+    const m = window.location.hash.match(/tg_jwt=([^&]+)/)
+    if (m) {
+      const token = decodeURIComponent(m[1])
+      localStorage.setItem('token', token)
+      setToken(token)
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      void fetchMeWith(token)
+    }
+  }, [fetchMeWith])
+
+  // GA init (один раз)
+  useEffect(() => {
+    initGA()
+  }, [])
+
+  // Инициализация auth: localStorage или Telegram WebApp initData
   useEffect(() => {
     const tg = window.Telegram?.WebApp
     const stored = localStorage.getItem('token')
@@ -98,7 +92,7 @@ export default function App() {
     })()
   }, [fetchMeWith])
 
-  // Событие логина извне (TelegramGate/DEV)
+  // Событие логина извне (если где-то поставите window.dispatchEvent('auth:login'))
   useEffect(() => {
     async function onAuthLogin() {
       const token = localStorage.getItem('token')
@@ -108,7 +102,7 @@ export default function App() {
     return () => window.removeEventListener('auth:login', onAuthLogin)
   }, [fetchMeWith])
 
-  // ⬇️ GA page_view при смене маршрута
+  // GA page_view
   const location = useLocation()
   useEffect(() => {
     sendPageview(location.pathname + location.search)
@@ -127,15 +121,10 @@ export default function App() {
       <Header authed={authed} me={me} onLogout={handleLogout} />
       <Container sx={{ py: 3 }}>
         <Routes>
-          {/* Публичные страницы */}
           <Route path="/" element={<Home me={me} />} />
           <Route path="/more" element={<More />} />
           <Route path="/keys-help" element={<ApiKeysGuide />} />
-
-          {/* Страница входа через Telegram */}
           <Route path="/signin" element={<TelegramGate />} />
-
-          {/* Защищённые страницы */}
           <Route
             path="/settings"
             element={
@@ -152,8 +141,6 @@ export default function App() {
               </Protected>
             }
           />
-
-          {/* Фолбэк */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Container>
