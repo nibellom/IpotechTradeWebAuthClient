@@ -2,10 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Box, Card, CardContent, Typography, Stack, Button, Alert, Tooltip } from '@mui/material'
 import api, { setToken } from '../api.js'
-import TelegramWebAppGate from './TelegramWebAppGate.jsx'
 
 export default function TelegramGate() {
-  {<TelegramWebAppGate />}
   const ref = useRef(null)
   const navigate = useNavigate()
   const location = useLocation()

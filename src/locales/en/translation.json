@@ -2,7 +2,8 @@
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
-    "settings": "Settings",
+    "settings": "Connect account",
+    "referralsFull": "Referral System",
     "lang": "Language"
   },
   "login": {
@@ -187,5 +188,22 @@
       "item3": "Bot trading balance → amount allocated for the bot (at least 500 USDT)."
     },
     "warning": "If you see authorization or IP restriction errors, verify that {{ip}} is on the allowlist and permissions are set correctly."
+  },
+  "referrals": {
+    "title": "Referral System",
+    "description": "Here is your referral link. Share it with friends — they get +50 USDT on deposit, and you earn 20% from their top-ups to your Bybit UID.",
+    "invited": "Invited",
+    "earned": "Earned",
+    "bonus": "Referral Bonus",
+    "copy": "Copy",
+    "note": "Questions? Contact support:",
+    "bybitUID": {
+      "title": "Bybit UID for Referral Payouts",
+      "desc": "Enter your Bybit UID (6–20 digits only). 20% of your referrals' deposits will be sent here.",
+      "placeholder": "e.g. 12345678",
+      "save": "Save",
+      "saved": "UID saved!",
+      "error": "UID must be 6–20 digits"
+    }
   }
 }

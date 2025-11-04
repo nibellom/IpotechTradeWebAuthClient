@@ -71,9 +71,25 @@ export default function Header({ authed, me, onLogout }) {
               <Button color="inherit" component={Link} to="/">
                 {t('nav.home')}
               </Button>
+
+              {/* НОВЫЙ ПУНКТ: РЕФЕРАЛЫ */}
+              {/* <Button
+                color="inherit"
+                component={RouterLink}
+                to="/referrals"
+                startIcon={<PeopleIcon />}
+              >
+                {t('nav.referrals')}
+              </Button> */}
+
               {/* <Button color="inherit" component={Link} to="/dashboard">{t('nav.dashboard')}</Button> */}
               <Button color="inherit" component={Link} to="/settings">
                 {t('nav.settings')}
+              </Button>
+
+              {/* РЕФЕРАЛЬНАЯ СИСТЕМА */}
+              <Button color="inherit" component={RouterLink} to="/referrals">
+                {t('nav.referralsFull')}
               </Button>
             </>
           )}
@@ -112,11 +128,32 @@ export default function Header({ authed, me, onLogout }) {
                 <MenuItem component={Link} to="/" onClick={() => setNavAnchor(null)}>
                   {t('nav.home')}
                 </MenuItem>
+
+                {/* РЕФЕРАЛЫ В МОБИЛЬНОМ МЕНЮ */}
+                {/* <MenuItem
+                  component={RouterLink}
+                  to="/referrals"
+                  onClick={() => setNavAnchor(null)}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                >
+                  <PeopleIcon fontSize="small" />
+                  {t('nav.referrals')}
+                </MenuItem> */}
+
                 {/* <MenuItem component={Link} to="/dashboard" onClick={() => setNavAnchor(null)}>
                   {t('nav.dashboard')}
                 </MenuItem> */}
                 <MenuItem component={Link} to="/settings" onClick={() => setNavAnchor(null)}>
                   {t('nav.settings')}
+                </MenuItem>
+
+                {/* РЕФЕРАЛЬНАЯ СИСТЕМА — ТОЛЬКО ТЕКСТ */}
+                <MenuItem
+                  component={RouterLink}
+                  to="/referrals"
+                  onClick={() => setNavAnchor(null)}
+                >
+                  {t('nav.referralsFull')}
                 </MenuItem>
               </>
             )}
