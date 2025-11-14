@@ -5,6 +5,7 @@ import Header from './components/Header.jsx'
 import Home from './pages/Home.jsx'
 import Settings from './pages/Settings.jsx'
 import Referrals from './pages/Referrals.jsx'
+import Terms from './pages/Terms.jsx'
 import Dashboard from './components/Dashboard.jsx'
 import api, { setToken } from './api.js'
 import TelegramGate from './components/TelegramGate.jsx'
@@ -127,6 +128,7 @@ export default function App() {
           <Route path="/keys-help" element={<ApiKeysGuide />} />
           <Route path="/signin" element={<TelegramGate />} />
           <Route path="/referrals" element={<Referrals />} />
+          <Route path="/terms" element={<Terms />} />
           <Route
             path="/settings"
             element={

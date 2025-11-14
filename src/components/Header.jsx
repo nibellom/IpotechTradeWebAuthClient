@@ -11,7 +11,7 @@ import {
 } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
-import { Link, Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { setToken } from '../api'
 import MenuIcon from '@mui/icons-material/Menu'
 import TranslateIcon from '@mui/icons-material/Translate'
@@ -68,7 +68,7 @@ export default function Header({ authed, me, onLogout }) {
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
           {authed && (
             <>
-              <Button color="inherit" component={Link} to="/">
+              <Button color="inherit" component={RouterLink} to="/">
                 {t('nav.home')}
               </Button>
 
@@ -83,7 +83,7 @@ export default function Header({ authed, me, onLogout }) {
               </Button> */}
 
               {/* <Button color="inherit" component={Link} to="/dashboard">{t('nav.dashboard')}</Button> */}
-              <Button color="inherit" component={Link} to="/settings">
+              <Button color="inherit" component={RouterLink} to="/settings">
                 {t('nav.settings')}
               </Button>
 
@@ -91,11 +91,24 @@ export default function Header({ authed, me, onLogout }) {
               <Button color="inherit" component={RouterLink} to="/referrals">
                 {t('nav.referralsFull')}
               </Button>
+
+              <Button color="inherit" component={RouterLink} to="/terms">
+                {t('nav.terms')}
+              </Button>
+
+              <Button
+                color="inherit"
+                href="https://t.me/ipotechTrade"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('nav.community')}
+              </Button>
             </>
           )}
 
           {!authed ? (
-            <Button color="primary" variant="contained" component={Link} to="/signin">
+            <Button color="primary" variant="contained" component={RouterLink} to="/signin">
               {t('auth.signIn')}
             </Button>
           ) : (
@@ -125,25 +138,11 @@ export default function Header({ authed, me, onLogout }) {
           <Menu anchorEl={navAnchor} open={Boolean(navAnchor)} onClose={() => setNavAnchor(null)}>
             {authed && (
               <>
-                <MenuItem component={Link} to="/" onClick={() => setNavAnchor(null)}>
+                <MenuItem component={RouterLink} to="/" onClick={() => setNavAnchor(null)}>
                   {t('nav.home')}
                 </MenuItem>
-
-                {/* РЕФЕРАЛЫ В МОБИЛЬНОМ МЕНЮ */}
-                {/* <MenuItem
-                  component={RouterLink}
-                  to="/referrals"
-                  onClick={() => setNavAnchor(null)}
-                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                >
-                  <PeopleIcon fontSize="small" />
-                  {t('nav.referrals')}
-                </MenuItem> */}
-
-                {/* <MenuItem component={Link} to="/dashboard" onClick={() => setNavAnchor(null)}>
-                  {t('nav.dashboard')}
-                </MenuItem> */}
-                <MenuItem component={Link} to="/settings" onClick={() => setNavAnchor(null)}>
+               
+                <MenuItem component={RouterLink} to="/settings" onClick={() => setNavAnchor(null)}>
                   {t('nav.settings')}
                 </MenuItem>
 
@@ -155,10 +154,28 @@ export default function Header({ authed, me, onLogout }) {
                 >
                   {t('nav.referralsFull')}
                 </MenuItem>
+
+                <MenuItem
+                  component={RouterLink}
+                  to="/terms"
+                  onClick={() => setNavAnchor(null)}
+                >
+                  {t('nav.terms')}
+                </MenuItem>
+
+                <MenuItem
+                  component="a"
+                  href="https://t.me/ipotechTrade"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setNavAnchor(null)}
+                >
+                  {t('nav.community')}
+                </MenuItem>
               </>
             )}
             {!authed ? (
-              <MenuItem component={Link} to="/signin" onClick={() => setNavAnchor(null)}>
+              <MenuItem component={RouterLink} to="/signin" onClick={() => setNavAnchor(null)}>
                 {t('auth.signIn')}
               </MenuItem>
             ) : (
