@@ -36,18 +36,38 @@
     <script type="module" src="/src/main.jsx"></script>
     <script>
       // Ранняя проверка Telegram WebApp для отладки
-      window.addEventListener('DOMContentLoaded', function() {
-        console.log('[WebApp Debug] DOM loaded, checking Telegram WebApp...');
-        console.log('[WebApp Debug] window.Telegram:', window.Telegram);
-        if (window.Telegram?.WebApp) {
-          console.log('[WebApp Debug] WebApp found, initData:', window.Telegram.WebApp.initData ? 'available' : 'not available');
-          if (window.Telegram.WebApp.initData) {
-            console.log('[WebApp Debug] initData length:', window.Telegram.WebApp.initData.length);
+      (function() {
+        function checkWebApp() {
+          console.log('[WebApp Debug] Checking Telegram WebApp...');
+          console.log('[WebApp Debug] window.Telegram:', window.Telegram);
+          
+          if (window.Telegram?.WebApp) {
+            const tg = window.Telegram.WebApp;
+            console.log('[WebApp Debug] WebApp found!');
+            console.log('[WebApp Debug] Version:', tg.version);
+            console.log('[WebApp Debug] Platform:', tg.platform);
+            console.log('[WebApp Debug] initData:', tg.initData ? `available (length: ${tg.initData.length})` : 'NOT available');
+            
+            if (tg.initDataUnsafe) {
+              console.log('[WebApp Debug] initDataUnsafe:', tg.initDataUnsafe);
+            }
+          } else {
+            console.log('[WebApp Debug] WebApp not found - may not be in Telegram context');
           }
-        } else {
-          console.log('[WebApp Debug] WebApp not found');
         }
-      });
+        
+        // Проверяем сразу
+        checkWebApp();
+        
+        // Проверяем после загрузки DOM
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', checkWebApp);
+        }
+        
+        // Проверяем через небольшую задержку (на случай если скрипт загружается асинхронно)
+        setTimeout(checkWebApp, 500);
+        setTimeout(checkWebApp, 1000);
+      })();
     </script>
   </body>
 </html>

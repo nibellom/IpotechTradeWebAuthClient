@@ -24,6 +24,13 @@ export default function App() {
   const [me, setMe] = useState(null)
   const authed = useMemo(() => Boolean(me), [me])
 
+  // Функция для отправки логов на сервер (для отладки)
+  const sendDebugLog = (message, data = null, level = 'info') => {
+    console.log(`[${level.toUpperCase()}]`, message, data || '')
+    // Отправляем на сервер для отладки (неблокирующе)
+    api.post('/auth/debug/log', { message, data, level }).catch(() => {})
+  }
+
   function handleLogout() {
     localStorage.removeItem('token')
     setToken(null)
@@ -72,16 +79,17 @@ export default function App() {
 
     async function loginViaTelegram(initData) {
       try {
-        console.log('[WebApp] Attempting authentication with initData')
+        sendDebugLog('Attempting authentication with initData', { initDataLength: initData?.length })
         const resp = await api.post('/auth/telegram/web-app', { initData })
         const { token } = resp.data
         if (!token) {
           throw new Error('No token received')
         }
         localStorage.setItem('token', token)
+        sendDebugLog('Authentication successful, fetching user data')
         await fetchMeWith(token)
       } catch (e) {
-        console.error('[WebApp] Telegram auth failed:', e?.response?.data || e?.message)
+        sendDebugLog('Telegram auth failed', { error: e?.response?.data || e?.message }, 'error')
         setBooting(false)
       }
     }
@@ -89,59 +97,97 @@ export default function App() {
     async function getInitData() {
       // Проверяем наличие Telegram WebApp SDK
       if (!window.Telegram?.WebApp) {
+        sendDebugLog('Telegram.WebApp not available', {
+          hasTelegram: !!window.Telegram,
+          userAgent: navigator.userAgent
+        }, 'warn')
         return null
       }
 
       const tg = window.Telegram.WebApp
+      sendDebugLog('Telegram.WebApp found', {
+        version: tg.version,
+        platform: tg.platform,
+        initDataUnsafe: !!tg.initDataUnsafe
+      })
       
       // Инициализируем WebApp
       try {
         tg.ready()
         tg.expand()
+        sendDebugLog('WebApp initialized', { ready: true })
       } catch (e) {
-        console.warn('[WebApp] Error initializing:', e)
+        sendDebugLog('Error initializing WebApp', { error: e.message }, 'error')
       }
 
       // initData должен быть доступен сразу
-      const initData = tg.initData
+      let initData = tg.initData
+      
+      // Если initData пуст, проверяем initDataUnsafe (для диагностики)
+      if (!initData || initData.length === 0) {
+        sendDebugLog('initData empty, checking initDataUnsafe', {
+          hasInitDataUnsafe: !!tg.initDataUnsafe,
+          initDataUnsafeKeys: tg.initDataUnsafe ? Object.keys(tg.initDataUnsafe) : []
+        }, 'warn')
+        
+        // initDataUnsafe может содержать те же данные, но в виде объекта
+        // Это может помочь понять, почему initData пуст
+        if (tg.initDataUnsafe?.user) {
+          sendDebugLog('initDataUnsafe contains user data', {
+            userId: tg.initDataUnsafe.user?.id,
+            username: tg.initDataUnsafe.user?.username
+          }, 'info')
+        }
+      }
+      
       if (initData && initData.length > 0) {
+        sendDebugLog('initData found', { length: initData.length })
         return initData
       }
 
+      sendDebugLog('initData not available', {
+        hasInitData: !!initData,
+        initDataLength: initData?.length || 0,
+        hasInitDataUnsafe: !!tg.initDataUnsafe
+      }, 'warn')
       return null
     }
 
-    async function tryTelegramWebAppAuth(maxAttempts = 20) {
+    async function tryTelegramWebAppAuth(maxAttempts = 30) {
       // Пытаемся получить initData несколько раз с задержками
       for (let i = 0; i < maxAttempts; i++) {
         const initData = await getInitData()
         if (initData) {
-          console.log('[WebApp] Found initData on attempt', i + 1)
+          sendDebugLog(`Found initData on attempt ${i + 1}`)
           return initData
         }
         // Небольшая задержка перед следующей попыткой
-        await new Promise(resolve => setTimeout(resolve, 150))
+        await new Promise(resolve => setTimeout(resolve, 200))
       }
+      sendDebugLog(`initData not found after ${maxAttempts} attempts`, null, 'error')
       return null
     }
 
     (async () => {
       if (stored) {
-        console.log('[Auth] Using stored token')
+        sendDebugLog('Using stored token')
         await fetchMeWith(stored)
       } else {
         // Пытаемся аутентифицироваться через Telegram WebApp
-        console.log('[Auth] No stored token, trying WebApp auth...')
+        sendDebugLog('No stored token, trying WebApp auth', {
+          url: window.location.href,
+          hasTelegram: !!window.Telegram
+        })
         
-        // Даём время скрипту загрузиться
-        await new Promise(resolve => setTimeout(resolve, 100))
+        // Даём время скрипту загрузиться (увеличиваем задержку)
+        await new Promise(resolve => setTimeout(resolve, 300))
         
         const initData = await tryTelegramWebAppAuth()
         if (initData) {
-          console.log('[Auth] WebApp initData found, authenticating...')
+          sendDebugLog('WebApp initData found, authenticating')
           await loginViaTelegram(initData)
         } else {
-          console.log('[Auth] WebApp auth not available - showing unauthenticated state')
+          sendDebugLog('WebApp auth not available - showing unauthenticated state', null, 'warn')
           setBooting(false)
         }
       }
