@@ -72,54 +72,76 @@ export default function App() {
 
     async function loginViaTelegram(initData) {
       try {
+        console.log('[WebApp] Attempting authentication with initData')
         const resp = await api.post('/auth/telegram/web-app', { initData })
         const { token } = resp.data
+        if (!token) {
+          throw new Error('No token received')
+        }
         localStorage.setItem('token', token)
         await fetchMeWith(token)
       } catch (e) {
-        console.warn('Telegram auth failed', e?.response?.data || e?.message)
+        console.error('[WebApp] Telegram auth failed:', e?.response?.data || e?.message)
         setBooting(false)
       }
     }
 
-    async function waitForTelegramWebApp(maxAttempts = 10) {
+    async function getInitData() {
+      // Проверяем наличие Telegram WebApp SDK
+      if (!window.Telegram?.WebApp) {
+        return null
+      }
+
+      const tg = window.Telegram.WebApp
+      
+      // Инициализируем WebApp
+      try {
+        tg.ready()
+        tg.expand()
+      } catch (e) {
+        console.warn('[WebApp] Error initializing:', e)
+      }
+
+      // initData должен быть доступен сразу
+      const initData = tg.initData
+      if (initData && initData.length > 0) {
+        return initData
+      }
+
+      return null
+    }
+
+    async function tryTelegramWebAppAuth(maxAttempts = 20) {
+      // Пытаемся получить initData несколько раз с задержками
       for (let i = 0; i < maxAttempts; i++) {
-        if (window.Telegram?.WebApp) {
-          return window.Telegram.WebApp
+        const initData = await getInitData()
+        if (initData) {
+          console.log('[WebApp] Found initData on attempt', i + 1)
+          return initData
         }
-        await new Promise(resolve => setTimeout(resolve, 100))
+        // Небольшая задержка перед следующей попыткой
+        await new Promise(resolve => setTimeout(resolve, 150))
       }
       return null
     }
 
-    async function initTelegramWebApp() {
-      // Ждём загрузки Telegram WebApp SDK
-      const tg = await waitForTelegramWebApp()
-      if (!tg) {
-        return false
-      }
-
-      // Инициализируем WebApp API
-      tg.ready()
-      tg.expand()
-      
-      // Получаем initData
-      const initData = tg.initData
-      if (initData && initData.length > 0) {
-        await loginViaTelegram(initData)
-        return true
-      }
-      
-      return false
-    }
-
     (async () => {
       if (stored) {
+        console.log('[Auth] Using stored token')
         await fetchMeWith(stored)
       } else {
-        // Пытаемся инициализировать через Telegram WebApp
-        const webAppAuthed = await initTelegramWebApp()
-        if (!webAppAuthed) {
+        // Пытаемся аутентифицироваться через Telegram WebApp
+        console.log('[Auth] No stored token, trying WebApp auth...')
+        
+        // Даём время скрипту загрузиться
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        const initData = await tryTelegramWebAppAuth()
+        if (initData) {
+          console.log('[Auth] WebApp initData found, authenticating...')
+          await loginViaTelegram(initData)
+        } else {
+          console.log('[Auth] WebApp auth not available - showing unauthenticated state')
           setBooting(false)
         }
       }
