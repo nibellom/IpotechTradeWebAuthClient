@@ -68,12 +68,11 @@ export default function App() {
 
   // Инициализация auth: localStorage или Telegram WebApp initData
   useEffect(() => {
-    const tg = window.Telegram?.WebApp
     const stored = localStorage.getItem('token')
 
     async function loginViaTelegram(initData) {
       try {
-        const resp = await api.post('/auth/telegram/webapp', { initData })
+        const resp = await api.post('/auth/telegram/web-app', { initData })
         const { token } = resp.data
         localStorage.setItem('token', token)
         await fetchMeWith(token)
@@ -83,13 +82,46 @@ export default function App() {
       }
     }
 
+    async function waitForTelegramWebApp(maxAttempts = 10) {
+      for (let i = 0; i < maxAttempts; i++) {
+        if (window.Telegram?.WebApp) {
+          return window.Telegram.WebApp
+        }
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+      return null
+    }
+
+    async function initTelegramWebApp() {
+      // Ждём загрузки Telegram WebApp SDK
+      const tg = await waitForTelegramWebApp()
+      if (!tg) {
+        return false
+      }
+
+      // Инициализируем WebApp API
+      tg.ready()
+      tg.expand()
+      
+      // Получаем initData
+      const initData = tg.initData
+      if (initData && initData.length > 0) {
+        await loginViaTelegram(initData)
+        return true
+      }
+      
+      return false
+    }
+
     (async () => {
       if (stored) {
         await fetchMeWith(stored)
-      } else if (tg?.initData) {
-        await loginViaTelegram(tg.initData)
       } else {
-        setBooting(false)
+        // Пытаемся инициализировать через Telegram WebApp
+        const webAppAuthed = await initTelegramWebApp()
+        if (!webAppAuthed) {
+          setBooting(false)
+        }
       }
     })()
   }, [fetchMeWith])

@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Box, Card, CardContent, Typography, Stack, Button, Alert } from '@mui/material'
 import api, { setToken } from '../api.js'
-import axios from 'axios'
 
 export default function TelegramWebAppGate() {
   const navigate = useNavigate()
@@ -44,30 +43,50 @@ export default function TelegramWebAppGate() {
 
   // 3) Обработка Telegram WebApp (Mini App)
   useEffect(() => {
-    if (window.Telegram?.WebApp?.initData) {
-      setIsInWebApp(true)
-      const initData = window.Telegram.WebApp.initData
-      authenticateWithInitData(initData)
-    }
-  }, [navigate, location.state])
-
-  const authenticateWithInitData = async (initData) => {
-    try {
-      setError('')
-      const response = await axios.post('/api/auth/telegram/web-app', { initData })
-      const { token } = response.data
-      if (token) {
-        localStorage.setItem('token', token)
-        setToken(token)
-        window.dispatchEvent(new Event('auth:login'))
-        navigate(location.state?.from?.pathname || '/settings', { replace: true })
-      } else {
-        throw new Error('Empty token in response')
+    async function waitForTelegramWebApp(maxAttempts = 10) {
+      for (let i = 0; i < maxAttempts; i++) {
+        if (window.Telegram?.WebApp) {
+          return window.Telegram.WebApp
+        }
+        await new Promise(resolve => setTimeout(resolve, 100))
       }
-    } catch (e) {
-      console.error('WebApp auth error:', e)
+      return null
     }
-  }
+
+    async function authenticateWithInitData(initData) {
+      try {
+        setError('')
+        const response = await api.post('/auth/telegram/web-app', { initData })
+        const { token } = response.data
+        if (token) {
+          localStorage.setItem('token', token)
+          setToken(token)
+          window.dispatchEvent(new Event('auth:login'))
+          navigate(location.state?.from?.pathname || '/settings', { replace: true })
+        } else {
+          throw new Error('Empty token in response')
+        }
+      } catch (e) {
+        console.error('WebApp auth error:', e)
+        setError(e?.response?.data?.error || 'Ошибка аутентификации')
+      }
+    }
+
+    async function initWebApp() {
+      const tg = await waitForTelegramWebApp()
+      if (tg) {
+        tg.ready()
+        tg.expand()
+        const initData = tg.initData
+        if (initData && initData.length > 0) {
+          setIsInWebApp(true)
+          await authenticateWithInitData(initData)
+        }
+      }
+    }
+
+    initWebApp()
+  }, [navigate, location.state])
 
   return (
     <Box sx={{ maxWidth: 640, mx: 'auto' }}>
