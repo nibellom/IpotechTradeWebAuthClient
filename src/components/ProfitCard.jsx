@@ -37,11 +37,11 @@ export default function ProfitCard() {
   }, [])
 
   return (
-    <Card>
-      <CardContent>
+    <Card sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Typography variant="h6">{t('profit.title')}</Typography>
 
-        <Stack spacing={0.5} sx={{ mt: 1 }}>
+        <Stack spacing={0.5} sx={{ mt: 1, flex: 1 }}>
           <Typography variant="h3" sx={{ my: 0.5 }}>
             {fmt2(profit.total)} USDT
           </Typography>

@@ -3,7 +3,7 @@ import { Card, CardContent, Typography, Stack, TextField, Button, Alert } from '
 import { useTranslation } from 'react-i18next'
 import api from '../api'
 
-export default function BalanceEditorCard({ balance, onUpdated }) {
+export default function BalanceEditorCard({ balance, onUpdated, disabled = false, showTitle = true, showDescription = true }) {
   const { t } = useTranslation()
   const [value, setValue] = useState(balance ?? '')
   const [loading, setLoading] = useState(false)
@@ -31,34 +31,51 @@ export default function BalanceEditorCard({ balance, onUpdated }) {
     }
   }
 
-  return (
-    <Card>
-      <CardContent>
+  const content = (
+    <>
+      {showTitle && (
         <Typography variant="h6" sx={{ mb: 1 }}>
           {t('balanceEditor.title')}
         </Typography>
+      )}
+      {showDescription && (
         <Typography variant="body2" sx={{ mb: 2, opacity: .8 }}>
           {t('balanceEditor.description')}
         </Typography>
+      )}
 
-        {err && <Alert severity="error" sx={{ mb: 2 }}>{err}</Alert>}
-        {ok && <Alert severity="success" sx={{ mb: 2 }}>{ok}</Alert>}
+      {err && <Alert severity="error" sx={{ mb: 2 }}>{err}</Alert>}
+      {ok && <Alert severity="success" sx={{ mb: 2 }}>{ok}</Alert>}
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <TextField
-            label={t('balanceEditor.inputLabel')}
-            type="number"
-            size="small"
-            value={value}
-            inputProps={{ min: 0, step: '0.01' }}
-            onChange={(e) => setValue(e.target.value)}
-            sx={{ width: 220 }}
-          />
-          <Button variant="contained" disabled={loading} onClick={save}>
-            {t('balanceEditor.saveBtn')}
-          </Button>
-        </Stack>
-      </CardContent>
-    </Card>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+        <TextField
+          label={t('balanceEditor.inputLabel')}
+          type="number"
+          size="small"
+          value={value}
+          inputProps={{ min: 0, step: '0.01' }}
+          onChange={(e) => setValue(e.target.value)}
+          disabled={disabled || loading}
+          sx={{ width: 220 }}
+        />
+        <Button variant="contained" disabled={disabled || loading} onClick={save}>
+          {t('balanceEditor.saveBtn')}
+        </Button>
+      </Stack>
+    </>
   )
+
+  if (showTitle) {
+    // Если показываем заголовок, значит это самостоятельный блок с карточкой
+    return (
+      <Card>
+        <CardContent>
+          {content}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Иначе возвращаем только содержимое без карточки
+  return content
 }

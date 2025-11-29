@@ -19,7 +19,12 @@
     "balance": "Bot trading balance",
     "deposit": "Deposit",
     "profit": "Profit (net of fees is shown in bot)",
-    "deals": "Closed deals: {{count}}"
+    "deals": "Closed deals: {{count}}",
+    "balanceMode": "Trading mode",
+    "tradeFullBalance": "Trade with all available balance",
+    "tradeFixedBalance": "Trade with fixed balance",
+    "balanceUpdated": "Trading mode updated successfully",
+    "updateError": "Failed to update trading mode"
   },
   "connect": {
     "title": "Connect / Update API keys",
@@ -32,7 +37,10 @@
     "save": "Save",
     "saved": "Saved",
     "success": "Account successfully connected",
-    "help": "API Keys Guide"
+    "help": "API Keys Guide",
+    "useFullBalance": "Use entire available balance (recommended)",
+    "acceptTerms": "By connecting the account, I accept the",
+    "acceptRisks": "I understand that trading on the exchange carries high risks and I take full responsibility for possible losses"
   },
   "deposit": {
     "title": "Deposit management",
@@ -128,7 +136,7 @@
   },
   "balanceEditor": {
     "title": "Edit bot trading balance",
-    "description": "Enter a new value.",
+    "description": "You can allow the bot to use all funds in your account (recommended) or enter a value manually.",
     "inputLabel": "Balance",
     "saveBtn": "Save",
     "success": "Balance updated",

@@ -19,9 +19,9 @@ export default function DepositCard({ current }) {
   }
 
   return (
-    <Card>
-      <CardContent>
-        <Stack spacing={2}>
+    <Card sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Stack spacing={2} sx={{ flex: 1 }}>
           <Typography variant="h6">{t('deposit.title')}</Typography>
           <Typography variant="body2" sx={{ opacity:.8 }}>{t('deposit.current', { v: current })}</Typography>
           <TextField label={t('deposit.amount')} value={amount} onChange={e=>setAmount(e.target.value)} />
