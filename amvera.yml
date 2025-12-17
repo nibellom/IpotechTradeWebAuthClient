@@ -3,8 +3,4 @@ meta:
   toolchain:
     name: browser
     version: "22"
-build:
-  additionalCommands: null
-  artifacts:
-    build/*: /
-run: {}
+
