@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next'
 
 export default function ApiKeysGuide() {
   const { t } = useTranslation()
-  const allowedIp = import.meta.env.VITE_ALLOWED_IP || '212.67.29.199'
+  const primaryIp = import.meta.env.VITE_ALLOWED_IP || '212.67.29.199'
+  const secondaryIp = '45.144.49.113'
+  const allowedIp = `${primaryIp},${secondaryIp}` // Адреса через запятую БЕЗ ПРОБЕЛА
 
   return (
     <Box sx={{ maxWidth: 900, mx: 'auto' }}>

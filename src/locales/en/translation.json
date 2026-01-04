@@ -166,19 +166,19 @@
   "keysGuide": {
     "title": "Guide: creating API keys for Bybit & Binance",
     "ipTitle": "IP allowlist:",
-    "ipText": "use this IP when creating your keys: {{ip}}",
+    "ipText": "use these IPs when creating your keys: {{ip}} (add addresses separated by comma WITHOUT SPACE)",
     "common": {
       "title": "General recommendations",
       "item1": "Create a dedicated key pair specifically for the bot.",
       "item2": "Enable only trading permissions. Withdrawals must remain disabled.",
-      "item3": "Always enable IP allowlist and add {{ip}}.",
+      "item3": "Always enable IP allowlist and add {{ip}} (separated by comma WITHOUT SPACE).",
       "item4": "Keep your keys secret. Never share your secret key."
     },
     "bybit": {
       "step1": "Open Bybit → Profile → API Management / Create API key.",
       "step2": "Key type: System generated (or the integrations option).",
       "step3": "Permissions: enable Trade (spot/derivatives as needed), disable Withdraw.",
-      "step4": "Enable IP Whitelist and add {{ip}}.",
+      "step4": "Enable IP Whitelist and add {{ip}} (separated by comma WITHOUT SPACE).",
       "step5": "Confirm creation (2FA/SMS/email).",
       "step6": "Save API Key and Secret — the secret is shown only once."
     },
@@ -187,7 +187,7 @@
       "step2": "Give it a clear name (e.g., IpotechTrade Bot).",
       "step3": "After creation, open key settings (Edit restrictions).",
       "step4": "Check Enable Spot & Margin Trading (or required trading permissions).",
-      "step5": "Enable Restrict access to trusted IPs only and add {{ip}}.",
+      "step5": "Enable Restrict access to trusted IPs only and add {{ip}} (separated by comma WITHOUT SPACE).",
       "step6": "Ensure Enable Withdrawals is disabled.",
       "step7": "Save API Key and Secret Key — the secret is shown only once."
     },
